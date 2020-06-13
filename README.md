@@ -28,9 +28,9 @@ gitmode - assuming path is to a git repo, git add, git commit and git push
 
 skipdelta - only write one file, best used in combination with gitmode
 
-}
 
 # Dependencies
 
 github.com/m-macnair/Toolbox
+
 github.com/m-macnair/Moo-Role
