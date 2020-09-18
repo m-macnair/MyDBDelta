@@ -24,12 +24,12 @@ ACCESSORS: {
 	has mysqldump => (
 		is      => 'rw',
 		lazy    => 1,
-		default => sub {'mysqldump'}
+		default => sub { 'mysqldump' }
 	);
 	has args => (
 		is      => 'rw',
 		lazy    => 1,
-		default => sub {'mysqldump'}
+		default => sub { 'mysqldump' }
 	);
 }
 
@@ -37,19 +37,19 @@ sub BUILD {
 
 	my ( $obj, $args ) = @_;
 	my $dbh = DBI->connect( "dbi:$args->{driver}:$args->{db};host=$args->{host}", $args->{user}, $args->{pass}, $args->{dbattr} || {} ) or die $!;
-	$obj->dbh($dbh);
-	$obj->args($args);
+	$obj->dbh( $dbh );
+	$obj->args( $args );
 
 }
 
 sub gettablestack {
 
-	my ($obj) = @_;
-	my $sth = $obj->dbh->prepare("show tables");
+	my ( $obj ) = @_;
+	my $sth = $obj->dbh->prepare( "show tables" );
 	$sth->execute();
 	my $return;
 	while ( my $row = $sth->fetchrow_arrayref() ) {
-		push ( @{$return}, $row->[0] );
+		push( @{$return}, $row->[0] );
 	}
 	return $return; # return!
 
@@ -57,9 +57,9 @@ sub gettablestack {
 
 sub criticalpath {
 
-	my ($obj) = @_;
-	for my $table ( @{ $obj->tablestack() } ) {
-		$obj->processtable($table);
+	my ( $obj ) = @_;
+	for my $table ( @{$obj->tablestack()} ) {
+		$obj->processtable( $table );
 	}
 
 }
@@ -68,15 +68,17 @@ sub processtable {
 
 	my ( $obj, $table, $c ) = @_;
 	my $dir = $obj->abspath( $obj->path() . "/$table/" );
-	$obj->mkpath($dir);
-	$obj->handledump( {
+	$obj->mkpath( $dir );
+	$obj->handledump(
+		{
 			dir        => $dir,
 			table      => $table,
 			type       => 'structure',
 			dumpparams => '--no-data',
 		}
 	);
-	$obj->handledump( {
+	$obj->handledump(
+		{
 			dir        => $dir,
 			table      => $table,
 			type       => 'data',
@@ -91,7 +93,7 @@ sub handledump {
 	my ( $obj, $c ) = @_;
 	my $args       = $obj->args();
 	my $mysqldump  = $obj->mysqldump;
-	my $timestring = POSIX::strftime( "%Y:%m:%dT%H:%M:%S", gmtime () );
+	my $timestring = POSIX::strftime( "%Y:%m:%dT%H:%M:%S", gmtime() );
 	my $exportname = "$c->{table}\_$c->{type}_$timestring.sql";
 	my $exportpath = "$c->{dir}/$exportname";
 	my $pstring    = '';
@@ -104,8 +106,8 @@ sub handledump {
 	`$cstring`;
 	my $fixed = "$c->{dir}/$c->{table}\_$c->{type}.sql";
 	if ( -e $fixed ) {
-		my $old     = $obj->digestfile($fixed);
-		my $current = $obj->digestfile($exportpath);
+		my $old     = $obj->digestfile( $fixed );
+		my $current = $obj->digestfile( $exportpath );
 		if ( $old eq $current ) {
 			unlink $exportpath;
 		} else {
@@ -121,11 +123,11 @@ sub handledump {
 sub digestfile {
 
 	my ( $obj, $path ) = @_;
-	open ( my $fh, '<:raw', $path )
+	open( my $fh, '<:raw', $path )
 	  or die "failed to open digest file [$path] : $!";
 	my $ctx = Digest::MD5->new;
-	$ctx->addfile($fh);
-	close ($fh);
+	$ctx->addfile( $fh );
+	close( $fh );
 	return $ctx->hexdigest();
 
 }
@@ -140,7 +142,8 @@ main();
 
 sub main {
 
-	my $clv = Toolbox::CombinedCLI::get_config( [
+	my $clv = Toolbox::CombinedCLI::get_config(
+		[
 			qw/
 			  path
 			  user
@@ -159,12 +162,13 @@ sub main {
 			  /
 		]
 	);
-	my $obj = Object->new($clv);
+	my $obj = Object->new( $clv );
 	if ( $clv->{data_only} || $clv->{structure_only} ) {
 		if ( $clv->{data_only} ) {
 			my $dir = $obj->abspath( $obj->path() . "/$table/" );
-			$obj->mkpath($dir);
-			$obj->handledump( {
+			$obj->mkpath( $dir );
+			$obj->handledump(
+				{
 					dir        => $dir,
 					table      => $table,
 					type       => 'data',
@@ -173,8 +177,9 @@ sub main {
 			);
 		} elsif {
 			my $dir = $obj->abspath( $obj->path() . "/$table/" );
-			$obj->mkpath($dir);
-			$obj->handledump( {
+			$obj->mkpath( $dir );
+			$obj->handledump(
+				{
 					dir        => $dir,
 					table      => $table,
 					type       => 'structure',
