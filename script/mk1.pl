@@ -8,8 +8,8 @@ use Moo;
 use Data::Dumper;
 use POSIX;
 with qw/
-  Moo::Role::DB
-  Moo::Role::FileSystem
+  Moo::GenericRole::DB
+  Moo::GenericRole::FileSystem
   /;
 ACCESSORS: {
 	has tablestack => (
