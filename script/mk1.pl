@@ -24,89 +24,88 @@ ACCESSORS: {
 	has mysqldump => (
 		is      => 'rw',
 		lazy    => 1,
-		default => sub { 'mysqldump' }
+		default => sub {'mysqldump'}
 	);
 	has args => (
 		is      => 'rw',
 		lazy    => 1,
-		default => sub { 'mysqldump' }
+		default => sub {'mysqldump'}
 	);
 }
 
 sub BUILD {
-	my ( $self, $args ) = @_;
-	my $dbh = DBI->connect( "dbi:$args->{driver}:$args->{db};host=$args->{host}", $args->{user}, $args->{pass}, $args->{dbattr} || {} ) or die $!;
-	$self->dbh( $dbh );
 
-	$self->args( $args );
+	my ( $obj, $args ) = @_;
+	my $dbh = DBI->connect( "dbi:$args->{driver}:$args->{db};host=$args->{host}", $args->{user}, $args->{pass}, $args->{dbattr} || {} ) or die $!;
+	$obj->dbh($dbh);
+	$obj->args($args);
+
 }
 
 sub gettablestack {
-	my ( $self ) = @_;
 
-	my $sth = $self->dbh->prepare( "show tables" );
+	my ($obj) = @_;
+	my $sth = $obj->dbh->prepare("show tables");
 	$sth->execute();
 	my $return;
-
 	while ( my $row = $sth->fetchrow_arrayref() ) {
-
-		push( @{$return}, $row->[0] );
+		push ( @{$return}, $row->[0] );
 	}
 	return $return; # return!
+
 }
 
 sub criticalpath {
-	my ( $self ) = @_;
-	for my $table ( @{$self->tablestack()} ) {
-		$self->processtable( $table );
+
+	my ($obj) = @_;
+	for my $table ( @{ $obj->tablestack() } ) {
+		$obj->processtable($table);
 	}
 
 }
 
 sub processtable {
-	my ( $self, $table, $c ) = @_;
 
-	my $dir = $self->abspath( $self->path() . "/$table/" );
-	$self->mkpath( $dir );
-
-	$self->handledump(
-		{
+	my ( $obj, $table, $c ) = @_;
+	my $dir = $obj->abspath( $obj->path() . "/$table/" );
+	$obj->mkpath($dir);
+	$obj->handledump( {
 			dir        => $dir,
 			table      => $table,
 			type       => 'structure',
 			dumpparams => '--no-data',
 		}
 	);
-	$self->handledump(
-		{
+	$obj->handledump( {
 			dir        => $dir,
 			table      => $table,
 			type       => 'data',
 			dumpparams => '--no-create-info',
 		}
 	);
+
 }
 
 sub handledump {
-	my ( $self, $c ) = @_;
-	my $args       = $self->args();
-	my $mysqldump  = $self->mysqldump;
-	my $timestring = POSIX::strftime( "%Y:%m:%dT%H:%M:%S", gmtime() );
+
+	my ( $obj, $c ) = @_;
+	my $args       = $obj->args();
+	my $mysqldump  = $obj->mysqldump;
+	my $timestring = POSIX::strftime( "%Y:%m:%dT%H:%M:%S", gmtime () );
 	my $exportname = "$c->{table}\_$c->{type}_$timestring.sql";
 	my $exportpath = "$c->{dir}/$exportname";
 	my $pstring    = '';
 	if ( $args->{pass} ) {
 		$pstring = "-p$args->{pass}";
 	}
-
 	my $cstring = "$mysqldump $c->{dumpparams} --skip-comments --skip-add-locks -h $args->{host} -u $args->{user} $pstring $args->{db} $c->{table} > $exportpath";
 
 	# 		warn $cstring;
 	`$cstring`;
 	my $fixed = "$c->{dir}/$c->{table}\_$c->{type}.sql";
 	if ( -e $fixed ) {
-		my $old     = $self->digestfile( $fixed );
-		my $current = $self->digestfile( $exportpath );
+		my $old     = $obj->digestfile($fixed);
+		my $current = $obj->digestfile($exportpath);
 		if ( $old eq $current ) {
 			unlink $exportpath;
 		} else {
@@ -116,18 +115,20 @@ sub handledump {
 	} else {
 		`cp $exportpath $fixed`;
 	}
+
 }
 
 sub digestfile {
-	my ( $self, $path ) = @_;
-	open( my $fh, '<:raw', $path )
+
+	my ( $obj, $path ) = @_;
+	open ( my $fh, '<:raw', $path )
 	  or die "failed to open digest file [$path] : $!";
 	my $ctx = Digest::MD5->new;
-	$ctx->addfile( $fh );
-	close( $fh );
+	$ctx->addfile($fh);
+	close ($fh);
 	return $ctx->hexdigest();
-}
 
+}
 1;
 
 package main;
@@ -138,8 +139,8 @@ use Data::Dumper;
 main();
 
 sub main {
-	my $clv = Toolbox::CombinedCLI::get_config(
-		[
+
+	my $clv = Toolbox::CombinedCLI::get_config( [
 			qw/
 			  path
 			  user
@@ -153,10 +154,36 @@ sub main {
 			  pass
 			  mysqldump
 			  dbattr
+			  data_only
+			  structure_only
 			  /
 		]
 	);
-	my $obj = Object->new( $clv );
-	$obj->criticalpath();
-}
+	my $obj = Object->new($clv);
+	if ( $clv->{data_only} || $clv->{structure_only} ) {
+		if ( $clv->{data_only} ) {
+			my $dir = $obj->abspath( $obj->path() . "/$table/" );
+			$obj->mkpath($dir);
+			$obj->handledump( {
+					dir        => $dir,
+					table      => $table,
+					type       => 'data',
+					dumpparams => '--no-create-info',
+				}
+			);
+		} elsif {
+			my $dir = $obj->abspath( $obj->path() . "/$table/" );
+			$obj->mkpath($dir);
+			$obj->handledump( {
+					dir        => $dir,
+					table      => $table,
+					type       => 'structure',
+					dumpparams => '--no-data',
+				}
+			);
+		} else {
+			$obj->criticalpath();
+		}
+	}
 
+}
