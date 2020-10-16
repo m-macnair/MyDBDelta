@@ -61,7 +61,7 @@ sub _set_dbh {
 	my ( $self, $args ) = @_;
 	$args ||= $self->cfg();
 	my $driver = $args->{driver} || 'mysql';
-	my $dbh    = DBI->connect( "dbi:$driver:$args->{db};host=$args->{host}", $args->{user}, $args->{pass}, $args->{dbattr} || {} ) or die $!;
+	my $dbh    = DBI->connect( "dbi:$driver:$args->{db};host=$args->{host};$args->{dsn_extra}", $args->{user}, $args->{pass}, $args->{dbattr} || {} ) or die $!;
 	return $dbh;
 
 }
@@ -69,7 +69,8 @@ sub _set_dbh {
 sub gettablestack {
 
 	my ( $self ) = @_;
-	my $sth = $self->dbh->prepare( "show tables " . $self->cfg->{show_suffix} || '' );
+	my $suffix   = $self->cfg->{show_suffix} || '';
+	my $sth      = $self->dbh->prepare( "show tables $suffix" );
 	$sth->execute();
 	my $return;
 	while ( my $row = $sth->fetchrow_arrayref() ) {
@@ -234,6 +235,8 @@ sub main {
 			  skip_data
 			  skip_structure
 			  show_suffix
+			  optstring
+			  dsn_extra
 			  /
 		]
 	);
