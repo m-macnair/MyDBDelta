@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 use strict;
 use warnings;
+our $VERSION = 'v1.0.0';
 
 package Object;
 use Carp qw/ cluck confess /;
@@ -107,7 +108,7 @@ sub criticalpath {
 sub processtable {
 
 	my ( $self, $table, $c ) = @_;
-	my $dir ||= $self->abspath( $self->cfg->{path} . "/$table/" );
+	my $dir ||= $self->abs_path( $self->cfg->{path} . "/$table/" );
 	$self->mkpath( $dir ) unless -e $dir;
 	warn $dir;
 	unless ( $self->cfg->{skip_structure} ) {
@@ -122,7 +123,7 @@ sub processtable {
 sub process_structure_dump {
 
 	my ( $self, $table, $c, $dir ) = @_;
-	$dir ||= $self->abspath( $self->cfg->{path} . "/$table/" );
+	$dir ||= $self->abs_path( $self->cfg->{path} . "/$table/" );
 	$self->mkpath( $dir ) unless -e $dir;
 	$self->handledump(
 		{
@@ -138,7 +139,7 @@ sub process_structure_dump {
 sub process_data_dump {
 
 	my ( $self, $table, $c, $dir ) = @_;
-	$dir ||= $self->abspath( $self->cfg->{path} . "/$table/" );
+	$dir ||= $self->abs_path( $self->cfg->{path} . "/$table/" );
 	$self->mkpath( $dir ) unless -e $dir;
 	$self->handledump(
 		{
