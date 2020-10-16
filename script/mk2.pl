@@ -61,7 +61,11 @@ sub _set_dbh {
 	my ( $self, $args ) = @_;
 	$args ||= $self->cfg();
 	my $driver = $args->{driver} || 'mysql';
-	my $dbh    = DBI->connect( "dbi:$driver:$args->{db};host=$args->{host};$args->{dsn_extra}", $args->{user}, $args->{pass}, $args->{dbattr} || {} ) or die $!;
+
+	#does weird things on older perl versions
+	my $dsn = "dbi:$driver:$args->{db};host=$args->{host};";
+	$dsn .= $args->{dsn_extra} if $args->{dsn_extra};
+	my $dbh = DBI->connect( $dsn, $args->{user}, $args->{pass}, $args->{dbattr} || {} ) or die $!;
 	return $dbh;
 
 }
@@ -224,11 +228,12 @@ sub main {
 			  user
 			  db
 			  host
-			  driver
+
 			  /
 		],
 		[
 			qw/
+			  driver
 			  pass
 			  mysqldump
 			  dbattr
