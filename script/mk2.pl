@@ -109,7 +109,7 @@ sub processtable {
 
 	my ( $self, $table, $c ) = @_;
 	my $dir ||= $self->abs_path( $self->cfg->{path} . "/$table/" );
-	$self->mk_path( $dir ) unless -e $dir;
+	$self->make_path( $dir ) unless -e $dir;
 	warn $dir;
 	unless ( $self->cfg->{skip_structure} ) {
 		$self->process_structure_dump( $table, $c, $dir );
@@ -124,7 +124,7 @@ sub process_structure_dump {
 
 	my ( $self, $table, $c, $dir ) = @_;
 	$dir ||= $self->abs_path( $self->cfg->{path} . "/$table/" );
-	$self->mk_path( $dir ) unless -e $dir;
+	$self->make_path( $dir ) unless -e $dir;
 	$self->handledump(
 		{
 			dir        => $dir,
@@ -140,7 +140,7 @@ sub process_data_dump {
 
 	my ( $self, $table, $c, $dir ) = @_;
 	$dir ||= $self->abs_path( $self->cfg->{path} . "/$table/" );
-	$self->mk_path( $dir ) unless -e $dir;
+	$self->make_path( $dir ) unless -e $dir;
 	$self->handledump(
 		{
 			dir        => $dir,
